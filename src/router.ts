@@ -1,47 +1,54 @@
-var setPrototypeOf = require('setprototypeof');
-var Route = require('./route');
-var Layer = require('./Layer');
-import { ClientServerNext } from './Application'
+import * as Route from './route';
+import * as Layer from './Layer';
+import * as http from 'http';
+import { httpReqResNxt } from './interface';
+import { Iapp } from './Express';
+import { IRoute } from './app';
 
-interface Irouter extends ClientServerNext {
+interface IRouter extends Iapp {
+  __proto__: object;
   params: object;
-  _params: string[];
-  stack : string[];
-  handle: ClientServerNext;
+  _params: any[];
+  stack: any[];
 }
 
-var proto = function(options: object = {}) {
-    const router = ((req,res,next) => {
-        router.handle(req,res,next)
-    }) as Irouter;
+interface IProto extends IRoute {
+  stack?: any;
+}
 
-    setPrototypeOf(router, proto)
 
-    router.params = {};
-    router._params = [];
-    router.stack = [];
+const proto:IProto = (options: object = {}) => {
+  const router = <IRouter>((req,res,next) => {
+      router.handle(req,res,next);
+  })
 
-    return router;
+  router.__proto__ = proto;
+
+  router.params = {};
+  router._params = [];
+  router.stack = [];
+
+  return router;
 };
 
 proto.route = function route(path) {
-    var route = new Route(path)
+  var route = new Route(path)
 
-    var layer = new Layer(path,{},route.dispatch.bind(route))
+  var layer = new Layer(path,{},route.dispatch.bind(route))
 
-    layer.route = route;
+  layer.route = route;
 
-    this.stack.push(layer);
+  this.stack.push(layer);
 
-    return route;
+  return route;
 };
 
 proto.handle = function handle(req, res, out) {
-    var self = this;
-    var stack = self.stack;
-    var layer = stack[0];
-    var route = layer.route;
-    route.stack[0].handle_request(req, res);
+  var self = this;
+  var stack = self.stack;
+  var layer = stack[0];
+  var route = layer.route;
+  route.stack[0].handle_request(req, res);
 }
 
-export default proto;
+export default proto

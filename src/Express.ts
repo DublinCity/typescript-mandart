@@ -1,8 +1,25 @@
-function createApplication() {
-  var app = function(req, res, next) {
-  };
+import { httpReqResNxt } from "./interface";
+import * as http from 'http';
 
-  return app
+var merge = require('merge-descriptors');
+var proto = require("./app")
+
+export interface Iapp extends httpReqResNxt {
+  handle: httpReqResNxt;
+  init(): void;
 }
 
-export = createApplication;
+function createApplication() {
+    let app = <Iapp>((req,res,next) => {
+        app.handle(req,res,next)
+    });
+
+    merge(app,proto,false);
+
+    app.init();
+    return app;
+}
+export default createApplication;
+export {
+  proto as application
+}
